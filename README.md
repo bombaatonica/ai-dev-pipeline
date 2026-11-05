@@ -56,13 +56,18 @@ Consulte [docs/setup.md](docs/setup.md). Resumo das credenciais e variáveis:
 
 | Nome | Onde | Finalidade |
 | --- | --- | --- |
-| `ANTHROPIC_API_KEY` | Secret Actions | Revisão e avaliação manual, cobradas pela API |
-| `ANTHROPIC_MODEL` | Variable Actions, opcional | Modelo Anthropic |
+| `AI_API_KEY` | Secret Actions | Chave do provedor escolhido para revisão e avaliação |
+| `AI_PROVIDER` | Variable Actions, opcional | `openai-compatible` (padrão) ou `anthropic` |
+| `AI_MODEL` | Variable Actions, opcional | Nome do modelo; padrão OpenAI `gpt-4.1-mini` |
+| `AI_BASE_URL` | Variable Actions, opcional | URL base HTTPS da API; padrão OpenAI `https://api.openai.com/v1` |
+| `AI_TOKEN_PARAM` | Variable Actions, opcional | Em APIs compatíveis: `max_completion_tokens` (padrão) ou `max_tokens` |
 | `RENDER_STAGING_HOOK` | Secret environment `staging` | Deploy de staging |
 | `STAGING_URL` | Variable environment `staging` | E2E e smoke |
 | `GITLEAKS_LICENSE` | Secret Actions, quando aplicável | Licença da action para organização |
 
 O `GITHUB_TOKEN` é fornecido pelo Actions. Branch protection e CODEOWNERS precisam ser configurados no GitHub. O deploy de staging é automático após o CI; não há etapa de aprovação de produção. Recursos gratuitos possuem limites e podem mudar; não se deve presumir custo total zero sem conferir uso, faturamento e limites atuais.
+
+Sem configuração, a revisão usa o formato Chat Completions da OpenAI e requer uma chave de API própria. Para outro serviço compatível, informe sua URL base e o identificador do modelo. Serviços e modelos diferem nos parâmetros aceitos; a compatibilidade precisa ser verificada. Anthropic nativa continua disponível com `AI_PROVIDER=anthropic`; as antigas `ANTHROPIC_API_KEY` e `ANTHROPIC_MODEL` continuam aceitas para esse provedor.
 
 ## Referências
 

@@ -12,7 +12,7 @@ export function redactSecrets(text: string): string {
   return text
     .replace(/-----BEGIN [^-\r\n]*PRIVATE KEY-----[\s\S]*?-----END [^-\r\n]*PRIVATE KEY-----/g, '[REDACTED]')
     .replace(/\b(?:AKIA|ASIA)[A-Z0-9]{16}\b/g, '[REDACTED]')
-    .replace(/\b(?:gh[pousr]_[A-Za-z0-9_]{20,}|github_pat_[A-Za-z0-9_]{20,}|sk-ant-[A-Za-z0-9_-]+)/g, '[REDACTED]')
+    .replace(/\b(?:gh[pousr]_[A-Za-z0-9_]{20,}|github_pat_[A-Za-z0-9_]{20,}|sk-ant-[A-Za-z0-9_-]+|sk-[A-Za-z0-9_-]{20,})/g, '[REDACTED]')
     .replace(/\b(password\s*=\s*)(?:"[^"]*"|'[^']*'|[^\s]+)/gi, '$1[REDACTED]');
 }
 export function filterDiff(diff: string): string {

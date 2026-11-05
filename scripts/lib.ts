@@ -15,16 +15,37 @@ export async function fetchWithRetry(url: string, init: RequestInit = {}, option
   throw new Error('Nenhuma tentativa disponível');
 }
 
-export async function askClaude(prompt: string): Promise<{ text: string; inputTokens: number; outputTokens: number }> {
-  const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) throw new Error('ANTHROPIC_API_KEY ausente');
-  const response = await fetchWithRetry('https://api.anthropic.com/v1/messages', {
-    method: 'POST', headers: { 'content-type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
-    body: JSON.stringify({ model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-5', max_tokens: 1200, messages: [{ role: 'user', content: prompt }] }),
+export async function askAI(prompt: string): Promise<{ text: string; inputTokens: number; outputTokens: number }> {
+  const provider = process.env.AI_PROVIDER || (!process.env.AI_API_KEY && process.env.ANTHROPIC_API_KEY ? 'anthropic' : 'openai-compatible');
+  if (provider !== 'openai-compatible' && provider !== 'anthropic') throw new Error('Provedor de IA não suportado');
+  const key = process.env.AI_API_KEY || (provider === 'anthropic' ? process.env.ANTHROPIC_API_KEY : undefined);
+  if (!key) throw new Error('AI_API_KEY ausente');
+  const model = process.env.AI_MODEL || (provider === 'anthropic' ? process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-5' : 'gpt-4.1-mini');
+  let base: URL;
+  try { base = new URL(process.env.AI_BASE_URL || (provider === 'anthropic' ? 'https://api.anthropic.com/v1' : 'https://api.openai.com/v1')); }
+  catch { throw new Error('URL de IA inválida'); }
+  if (base.protocol !== 'https:' || base.username || base.password || base.search || base.hash) throw new Error('URL de IA inválida');
+  const endpoint = `${base.toString().replace(/\/$/, '')}/${provider === 'anthropic' ? 'messages' : 'chat/completions'}`;
+  const tokenParam = provider === 'anthropic' ? 'max_tokens' : process.env.AI_TOKEN_PARAM || 'max_completion_tokens';
+  if (tokenParam !== 'max_tokens' && tokenParam !== 'max_completion_tokens') throw new Error('Parâmetro de tokens inválido');
+  const headers: Record<string, string> = provider === 'anthropic'
+    ? { 'content-type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' }
+    : { 'content-type': 'application/json', authorization: `Bearer ${key}` };
+  const response = await fetchWithRetry(endpoint, {
+    method: 'POST', headers, redirect: 'error',
+    body: JSON.stringify({ model, [tokenParam]: 1200, messages: [{ role: 'user', content: prompt }] }),
   });
-  if (!response.ok) throw new Error(`Anthropic HTTP ${response.status}`);
-  const data = await response.json() as { content?: Array<{ type: string; text?: string }>; usage?: { input_tokens?: number; output_tokens?: number } };
-  return { text: data.content?.filter((item) => item.type === 'text').map((item) => item.text ?? '').join('') ?? '', inputTokens: data.usage?.input_tokens ?? 0, outputTokens: data.usage?.output_tokens ?? 0 };
+  if (!response.ok) throw new Error(`Provedor de IA HTTP ${response.status}`);
+  const data = await response.json() as {
+    content?: Array<{ type: string; text?: string }>;
+    choices?: Array<{ message?: { content?: unknown } }>;
+    usage?: { input_tokens?: number; output_tokens?: number; prompt_tokens?: number; completion_tokens?: number };
+  };
+  const text = provider === 'anthropic'
+    ? data.content?.filter((item) => item.type === 'text').map((item) => item.text ?? '').join('')
+    : data.choices?.[0]?.message?.content;
+  if (typeof text !== 'string' || !text.trim()) throw new Error('Resposta de IA inválida');
+  return { text, inputTokens: data.usage?.input_tokens ?? data.usage?.prompt_tokens ?? 0, outputTokens: data.usage?.output_tokens ?? data.usage?.completion_tokens ?? 0 };
 }
 
 export async function github(path: string, init: RequestInit = {}): Promise<Response> {

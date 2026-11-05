@@ -16,5 +16,10 @@ jobs:
       - run: npx esbuild scripts/ai-eval.ts --bundle --platform=node --target=node24 --format=esm --outfile=dist/ai-eval.js
       - run: node dist/ai-eval.js
         env:
+          AI_API_KEY: ${{ secrets.AI_API_KEY }}
+          AI_PROVIDER: ${{ vars.AI_PROVIDER }}
+          AI_MODEL: ${{ vars.AI_MODEL }}
+          AI_BASE_URL: ${{ vars.AI_BASE_URL }}
+          AI_TOKEN_PARAM: ${{ vars.AI_TOKEN_PARAM }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           ANTHROPIC_MODEL: ${{ vars.ANTHROPIC_MODEL }}

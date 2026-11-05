@@ -17,6 +17,10 @@ describe('revisão estruturada', () => {
     expect(filterDiff(diff)).toContain('+code');
     expect(truncate('abcdef', 3)).toBe('abc');
   });
+  it('redige chaves OpenAI de projeto antes de enviar o contexto', () => {
+    const openaiKey = 'sk-' + 'proj-' + 'abcdefghijklmnopqrstuvwx0123456789';
+    expect(redactSecrets(`token=${openaiKey}`)).not.toContain(openaiKey);
+  });
   it('valida resultados, seleciona até cinco e ordena por severidade', () => {
     const result = parseReview(JSON.stringify([
       { severity: 'low', confidence: 0.9, file: 'a.ts', line: 1, title: 'A', explanation: 'B', suggestion: 'C' },

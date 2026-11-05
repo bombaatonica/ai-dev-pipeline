@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises';
-import { askClaude } from './lib.js';
+import { askAI } from './lib.js';
 import { parseReview, selectFindings } from './review-core.js';
 import { buildPrompt } from './reviewer.js';
 
@@ -9,7 +9,7 @@ async function main(): Promise<void> {
   let failures = 0;
   for (const item of cases) {
     const prompt = buildPrompt('review', rules, item.diff, '');
-    const response = await askClaude(prompt);
+    const response = await askAI(prompt);
     if (!Array.isArray(JSON.parse(response.text))) throw new Error('Resposta inválida da IA');
     const found = selectFindings(parseReview(response.text)).length > 0;
     const passed = found === item.expected;

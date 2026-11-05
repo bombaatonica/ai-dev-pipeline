@@ -1,4 +1,4 @@
-import { askClaude, github, summary } from './lib.js';
+import { askAI, github, summary } from './lib.js';
 import { filterDiff, formatReview, parseReview, redactSecrets, selectFindings, truncate } from './review-core.js';
 
 export function buildPrompt(mode: 'review' | 'test-gaps', rules: string, diff: string, contexts: string): string {
@@ -35,7 +35,7 @@ export async function runReview(mode: 'review' | 'test-gaps'): Promise<void> {
     } catch { /* arquivo indisponível não impede revisão */ }
   }
   const prompt = buildPrompt(mode, rules, diff, contexts.join('\n\n'));
-  const result = await askClaude(prompt);
+  const result = await askAI(prompt);
   if (!Array.isArray(JSON.parse(result.text))) throw new Error('Resposta da IA não é uma lista JSON');
   const findings = selectFindings(parseReview(result.text));
   const marker = `<!-- ai-dev-pipeline:${mode} -->`;

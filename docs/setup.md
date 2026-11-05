@@ -6,8 +6,16 @@
 2. Proteja `main`: exija PR, ao menos uma aprovação, revisão de code owners e o check `validate` do CI. Ative as demais verificações de segurança como obrigatórias se desejado. Não torne a IA obrigatória. Restrinja permissões de bypass e criação de branches.
    O autor do PR não pode aprovar o próprio PR: em um repositório individual, é necessário outro revisor elegível para satisfazer essa regra.
 3. Crie o environment `staging`. A entrega nesse único ambiente de demonstração é automática após o CI; a aprovação humana ocorre no PR.
-4. Crie o label `ai-review`; configure o secret `ANTHROPIC_API_KEY` e opcionalmente a variável `ANTHROPIC_MODEL`. A revisão só roda em PRs internos, não rascunhos, sem bots, com o label e mudanças além de documentação. A action de Gitleaks requer `GITLEAKS_LICENSE` em organização, conforme a documentação atual.
+4. Crie o label `ai-review`; configure o secret `AI_API_KEY` com uma chave dedicada do provedor escolhido. Por padrão, é usada a API da OpenAI com o modelo `gpt-4.1-mini`; `AI_MODEL` permite alterá-lo. A revisão só roda em PRs internos, não rascunhos, sem bots, com o label e mudanças além de documentação. A action de Gitleaks requer `GITLEAKS_LICENSE` em organização, conforme a documentação atual.
 5. Habilite Actions, packages e auto-merge nas configurações. Auto-merge de patch não ignora aprovação e checks. O CI suporta `merge_group`. A documentação do GitHub informa que a merge queue está disponível em repositórios públicos pertencentes a organizações, não em repositórios de conta pessoal. Para conta pessoal, exija que a branch esteja atualizada antes do merge; para organização, confirme também as condições de licença do Gitleaks.
+
+### Escolher provedor de IA
+
+- **OpenAI:** crie uma chave de API dedicada na plataforma OpenAI e cadastre-a como secret `AI_API_KEY`. A autenticação do ChatGPT no OpenCode não é transferida para o GitHub Actions; assinatura ChatGPT e API têm faturamento distinto.
+- **Outro serviço compatível:** use `AI_PROVIDER=openai-compatible`, `AI_BASE_URL` com a URL base HTTPS até a versão da API, por exemplo `https://openrouter.ai/api/v1`, e `AI_MODEL` com um modelo oferecido por esse serviço. Cadastre sua chave em `AI_API_KEY`. Se o serviço aceitar `max_tokens` mas não `max_completion_tokens`, configure `AI_TOKEN_PARAM=max_tokens`. Confirme compatibilidade e preços do provedor escolhido.
+- **Anthropic nativa:** configure `AI_PROVIDER=anthropic`, o secret `AI_API_KEY` e `AI_MODEL`. Instalações anteriores também podem usar `ANTHROPIC_API_KEY` e `ANTHROPIC_MODEL`; na ausência de `AI_PROVIDER` e `AI_API_KEY`, uma chave Anthropic anterior seleciona esse provedor.
+
+Não inclua credenciais em `AI_BASE_URL`. Cada PR elegível faz até duas chamadas; a avaliação manual também usa a API e pode gerar custo. Defina orçamento na plataforma do fornecedor. Nunca cole chaves em comentários, arquivos do repositório ou conversas.
 
 ## Render
 
