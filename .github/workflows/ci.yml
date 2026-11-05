@@ -1,0 +1,49 @@
+name: CI
+on:
+  pull_request:
+  merge_group:
+  workflow_call:
+permissions:
+  contents: read
+jobs:
+  validate:
+    name: validate
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: test-only
+          POSTGRES_DB: app
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U app -d app"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run lint:actions
+      - run: npm run typecheck
+      - run: npm audit --omit=dev --audit-level=high
+      - run: npm test
+      - run: npm run test:integration
+        env:
+          DATABASE_URL: postgres://app:test-only@localhost:5432/app
+      - run: npm run build
+      - run: npm run test:e2e
+        env:
+          DATABASE_URL: postgres://app:test-only@localhost:5432/app
+      - run: docker build -t ai-dev-pipeline:ci .
+      - uses: aquasecurity/trivy-action@8f28faec26515256b6d22074d1d2a8986f4cbd87
+        with:
+          image-ref: ai-dev-pipeline:ci
+          format: table
+          exit-code: '1'
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true

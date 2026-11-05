@@ -1,0 +1,38 @@
+{
+  "name": "ai-dev-pipeline",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --coverage --maxWorkers=1 --no-file-parallelism",
+    "test:integration": "vitest run --config vitest.integration.config.ts --maxWorkers=1 --no-file-parallelism",
+    "test:e2e": "playwright test",
+    "lint": "eslint .",
+    "lint:actions": "actionlint .github/workflows/ci.yml .github/workflows/cd.yml .github/workflows/security.yml .github/workflows/ai-review.yml .github/workflows/ai-eval.yml .github/workflows/dependabot.yml .github/workflows/preview.yml"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "pg": "^8.16.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@kjanat/actionlint": "^1.17.0",
+    "@playwright/test": "^1.56.1",
+    "@types/express": "^4.17.23",
+    "@types/node": "^20.19.24",
+    "@types/pg": "^8.15.6",
+    "@types/supertest": "^6.0.3",
+    "@vitest/coverage-v8": "^3.2.4",
+    "esbuild": "^0.25.12",
+    "eslint": "^9.39.1",
+    "supertest": "^7.1.4",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.3",
+    "vitest": "^3.2.4"
+  }
+}

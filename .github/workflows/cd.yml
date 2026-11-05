@@ -1,0 +1,107 @@
+name: Entrega demonstração
+on:
+  push:
+    branches: [main]
+permissions: {}
+concurrency:
+  group: delivery-main
+  cancel-in-progress: false
+jobs:
+  ci:
+    permissions:
+      contents: read
+    uses: ./.github/workflows/ci.yml
+  image:
+    needs: ci
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Publicar imagem no GHCR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          image="ghcr.io/${REPOSITORY,,}:$SHA"
+          docker build -t "$image" .
+          docker push "$image"
+  staging:
+    needs: image
+    runs-on: ubuntu-latest
+    environment: staging
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci
+      - name: Iniciar deploy
+        id: deploy
+        env:
+          HOOK: ${{ secrets.RENDER_STAGING_HOOK }}
+          SHA: ${{ github.sha }}
+        run: curl --fail --silent --show-error --request POST --get --data-urlencode "ref=$SHA" "$HOOK" > /dev/null
+      - name: Aguardar versão e validar staging
+        env:
+          BASE_URL: ${{ vars.STAGING_URL }}
+          EXPECTED_SHA: ${{ github.sha }}
+        run: |
+          node scripts/wait-version.mjs "$BASE_URL" "$EXPECTED_SHA"
+          npm run test:e2e
+      - name: Tentar rollback
+        if: failure() && steps.deploy.outcome == 'success'
+        env:
+          HOOK: ${{ secrets.RENDER_STAGING_HOOK }}
+          PREVIOUS: ${{ github.event.before }}
+        run: |
+          if [[ "$PREVIOUS" =~ ^[a-f0-9]{40}$ && "$PREVIOUS" != 0000000000000000000000000000000000000000 ]]; then
+            curl --fail --silent --show-error --request POST --get --data-urlencode "ref=$PREVIOUS" "$HOOK" > /dev/null
+          else
+            echo 'Rollback indisponível: SHA anterior inválido.' >&2
+            exit 1
+          fi
+  production:
+    needs: staging
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci
+      - name: Iniciar deploy
+        id: deploy
+        env:
+          HOOK: ${{ secrets.RENDER_PRODUCTION_HOOK }}
+          SHA: ${{ github.sha }}
+        run: curl --fail --silent --show-error --request POST --get --data-urlencode "ref=$SHA" "$HOOK" > /dev/null
+      - name: Aguardar versão e executar smoke
+        env:
+          BASE_URL: ${{ vars.PRODUCTION_URL }}
+          EXPECTED_SHA: ${{ github.sha }}
+        run: |
+          node scripts/wait-version.mjs "$BASE_URL" "$EXPECTED_SHA"
+          npx playwright test e2e/smoke.spec.ts
+      - name: Tentar rollback
+        if: failure() && steps.deploy.outcome == 'success'
+        env:
+          HOOK: ${{ secrets.RENDER_PRODUCTION_HOOK }}
+          PREVIOUS: ${{ github.event.before }}
+        run: |
+          if [[ "$PREVIOUS" =~ ^[a-f0-9]{40}$ && "$PREVIOUS" != 0000000000000000000000000000000000000000 ]]; then
+            curl --fail --silent --show-error --request POST --get --data-urlencode "ref=$PREVIOUS" "$HOOK" > /dev/null
+          else
+            echo 'Rollback indisponível: SHA anterior inválido.' >&2
+            exit 1
+          fi

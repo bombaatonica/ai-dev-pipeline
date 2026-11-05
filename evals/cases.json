@@ -1,0 +1,17 @@
+[
+  {
+    "name": "sql-concatenado",
+    "diff": "diff --git a/src/users.ts b/src/users.ts\n+const sql = \"SELECT * FROM users WHERE name = '\" + req.query.name + \"'\";\n+await db.query(sql);",
+    "expected": true
+  },
+  {
+    "name": "async-sem-erro",
+    "diff": "diff --git a/src/routes.ts b/src/routes.ts\n+app.get('/users', async (req, res) => {\n+  const users = await db.query('SELECT * FROM users');\n+  res.json(users);\n+});",
+    "expected": true
+  },
+  {
+    "name": "diff-limpo",
+    "diff": "diff --git a/src/math.ts b/src/math.ts\n+export function add(a: number, b: number): number { return a + b; }",
+    "expected": false
+  }
+]

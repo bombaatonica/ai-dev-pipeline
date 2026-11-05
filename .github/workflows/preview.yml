@@ -1,0 +1,121 @@
+name: Preview remoto
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, closed]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: Número de PR fechado para reconciliar recursos
+        required: true
+        type: string
+permissions: {}
+concurrency:
+  group: preview-pr-${{ github.event.number || inputs.pr }}
+  cancel-in-progress: false
+jobs:
+  prepare:
+    if: github.event.action != 'closed' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      statuses: write
+    outputs:
+      url: ${{ steps.preview.outputs.url }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '20'
+          cache: npm
+      - name: Informar check pendente
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+        run: gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$SHA" -f state=pending -f context=preview-render -f description='Preparando preview isolado' > /dev/null
+      - run: npm ci --ignore-scripts
+      - run: npx esbuild scripts/preview-command.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist/preview-command.js
+      - name: Criar recursos isolados
+        id: preview
+        env:
+          PREVIEW_MODE: prepare
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.number }}
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+          NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
+          NEON_PARENT_ID: ${{ vars.NEON_PARENT_ID }}
+          NEON_DATABASE: ${{ vars.NEON_DATABASE }}
+          NEON_ROLE: ${{ vars.NEON_ROLE }}
+          RENDER_OWNER_ID: ${{ vars.RENDER_PREVIEW_OWNER_ID }}
+          RENDER_API_KEY: ${{ secrets.RENDER_PREVIEW_API_KEY }}
+        run: node dist/preview-command.js
+  test:
+    needs: prepare
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Conferir SHA e testar API
+        env:
+          BASE_URL: ${{ needs.prepare.outputs.url }}
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          node scripts/wait-version.mjs "$BASE_URL" "$EXPECTED_SHA"
+          npm run test:e2e
+  report:
+    if: always() && github.event.action != 'closed' && github.event.pull_request.head.repo.full_name == github.repository
+    needs: [prepare, test]
+    runs-on: ubuntu-latest
+    permissions:
+      statuses: write
+    steps:
+      - name: Publicar resultado no commit do PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+          PREPARE_RESULT: ${{ needs.prepare.result }}
+          TEST_RESULT: ${{ needs.test.result }}
+        run: |
+          state=failure
+          if [[ "$PREPARE_RESULT" == success && "$TEST_RESULT" == success ]]; then state=success; fi
+          gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$SHA" -f "state=$state" -f context=preview-render -f description='Preview remoto e testes de API' > /dev/null
+  cleanup:
+    if: github.event_name == 'workflow_dispatch' || (github.event.action == 'closed' && github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ github.event.pull_request.base.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npx esbuild scripts/preview-command.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist/preview-command.js
+      - name: Remover recursos do PR fechado
+        env:
+          PREVIEW_MODE: cleanup
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.number || inputs.pr }}
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+          NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
+          RENDER_OWNER_ID: ${{ vars.RENDER_PREVIEW_OWNER_ID }}
+          RENDER_API_KEY: ${{ secrets.RENDER_PREVIEW_API_KEY }}
+        run: node dist/preview-command.js
