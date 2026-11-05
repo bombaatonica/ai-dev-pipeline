@@ -35,9 +35,7 @@ O PostgreSQL do CI roda como serviço efêmero no runner. O workflow de preview 
 
 ## Rodar localmente
 
-Requisitos: Node 20, npm e, para integração, PostgreSQL disponível em `DATABASE_URL`. Sem `DATABASE_URL`, a API usa memória. Playwright exercita apenas HTTP e não instala navegador.
-
-**Node 20 está fora de suporte (EOL)**, conforme o [calendário oficial](https://nodejs.org/en/about/previous-releases). Ele foi mantido por exigência do briefing; para uso real, atualize e valide uma versão LTS suportada.
+Requisitos: Node 24 LTS, npm e, para integração, PostgreSQL disponível em `DATABASE_URL`. Sem `DATABASE_URL`, a API usa memória. Playwright exercita apenas HTTP e não instala navegador.
 
 ```sh
 npm ci

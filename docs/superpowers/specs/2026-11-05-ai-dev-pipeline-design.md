@@ -1,5 +1,7 @@
 # Pipeline de desenvolvimento com IA — especificação
 
+> Atualização posterior: o requisito original de Node 20 foi substituído por Node 24 LTS após o fim do suporte do Node 20.
+
 ## Objetivo e limites
 
 Criar um repositório público de portfólio que demonstra um fluxo de desenvolvimento com CI/CD, segurança, revisão consultiva por IA e promoção de uma aplicação de exemplo. Staging e produção são ambientes de demonstração, não um serviço de produção real. Não declarar resultados ou métricas não medidos.

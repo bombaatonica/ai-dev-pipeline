@@ -1,5 +1,7 @@
 # Plano de implementação: ai-dev-pipeline
 
+> Atualização posterior: o requisito original de Node 20 foi substituído por Node 24 LTS após o fim do suporte do Node 20.
+
 **Objetivo:** entregar uma demonstração verificável de API, revisão consultiva por IA e pipeline de entrega.
 
 **Arquitetura:** API Express sobre interface de armazenamento, ferramentas de revisão isoladas e workflows GitHub Actions. Dois serviços Render de demonstração usam bancos separados.

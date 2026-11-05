@@ -22,7 +22,7 @@ Um projeto Neon Free dedicado pode fornecer branches de banco isoladas para PRs,
 
 ## Planos e disponibilidade
 
-Node 20 foi solicitado no briefing, mas está fora de suporte. Uma versão LTS suportada deve substituí-lo antes de qualquer uso real; a troca exige revalidar dependências, imagens e CI.
+O briefing original pedia Node 20, mas essa versão chegou ao fim do suporte. O projeto foi atualizado para Node 24 LTS. A imagem final atualiza pacotes Debian e não inclui npm, utilizado somente nas etapas de build; o Trivy continua bloqueando vulnerabilidades HIGH e CRITICAL corrigíveis.
 
 Na documentação Render consultada, há um Postgres gratuito por workspace, expiração após 30 dias, hibernação de web service e franquias compartilhadas. Dois workspaces são necessários para dois bancos gratuitos isolados. A permanência no plano gratuito depende de limites de uso e das condições do fornecedor. A action Gitleaks pede licença para organizações; sua documentação descreve licença gratuita, e contas pessoais não precisam dela. Verifique preços e condições ao configurar.
 

@@ -22,11 +22,11 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
-          node-version: '20'
+          node-version: '24'
           cache: npm
       - run: npm ci --ignore-scripts
       - name: Compilar scripts confiáveis da base
-        run: npx esbuild scripts/ai-review.ts scripts/ai-test-gaps.ts --bundle --platform=node --target=node20 --format=esm --outdir=dist/ai
+        run: npx esbuild scripts/ai-review.ts scripts/ai-test-gaps.ts --bundle --platform=node --target=node24 --format=esm --outdir=dist/ai
       - name: Revisar e identificar lacunas
         continue-on-error: true
         env:

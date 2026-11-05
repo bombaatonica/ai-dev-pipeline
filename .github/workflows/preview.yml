@@ -29,7 +29,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
-          node-version: '20'
+          node-version: '24'
           cache: npm
       - name: Informar check pendente
         env:
@@ -37,7 +37,7 @@ jobs:
           SHA: ${{ github.event.pull_request.head.sha }}
         run: gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$SHA" -f state=pending -f context=preview-render -f description='Preparando preview isolado' > /dev/null
       - run: npm ci --ignore-scripts
-      - run: npx esbuild scripts/preview-command.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist/preview-command.js
+      - run: npx esbuild scripts/preview-command.ts --bundle --platform=node --target=node24 --format=esm --outfile=dist/preview-command.js
       - name: Criar recursos isolados
         id: preview
         env:
@@ -65,7 +65,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
-          node-version: '20'
+          node-version: '24'
           cache: npm
       - run: npm ci --ignore-scripts
       - name: Conferir SHA e testar API
@@ -105,10 +105,10 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
-          node-version: '20'
+          node-version: '24'
           cache: npm
       - run: npm ci --ignore-scripts
-      - run: npx esbuild scripts/preview-command.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist/preview-command.js
+      - run: npx esbuild scripts/preview-command.ts --bundle --platform=node --target=node24 --format=esm --outfile=dist/preview-command.js
       - name: Remover recursos do PR fechado
         env:
           PREVIEW_MODE: cleanup
