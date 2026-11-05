@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from 'vitest';
-import { askAI, fetchWithRetry, github, summary } from '../scripts/lib.js';
+import { askAI, describeAIError, fetchWithRetry, github, summary } from '../scripts/lib.js';
 
 afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
 it('repete 503 e devolve a resposta quando recupera', async () => {
@@ -68,6 +68,12 @@ it('rejeita falha HTTP e resposta incompatível', async () => {
   vi.stubGlobal('fetch', mock);
   await expect(askAI('revise')).rejects.toThrow('HTTP 403');
   await expect(askAI('revise')).rejects.toThrow('Resposta');
+});
+it('resume erros HTTP sem expor conteúdo inesperado ou credenciais', () => {
+  expect(describeAIError(new Error('Provedor de IA HTTP 429'))).toBe('Provedor de IA HTTP 429');
+  expect(describeAIError(new Error('AI_API_KEY ausente'))).toBe('AI_API_KEY ausente');
+  expect(describeAIError(new Error('segredo ou conteúdo inesperado'))).toBe('Erro não identificado');
+  expect(describeAIError(new Error('Provedor de IA HTTP 429 token=segredo'))).toBe('Erro não identificado');
 });
 it('envia credencial ao GitHub e trata resposta não autorizada', async () => {
   vi.stubEnv('GITHUB_TOKEN', 'test-token');

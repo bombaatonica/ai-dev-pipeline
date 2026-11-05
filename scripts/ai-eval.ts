@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises';
-import { askAI } from './lib.js';
+import { askAI, describeAIError } from './lib.js';
 import { parseReview, selectFindings } from './review-core.js';
 import { buildPrompt } from './reviewer.js';
 
@@ -18,4 +18,4 @@ async function main(): Promise<void> {
   }
   if (failures) process.exitCode = 1;
 }
-main().catch(() => { console.error('Avaliação indisponível'); process.exitCode = 1; });
+main().catch((error: unknown) => { console.error(`Avaliação indisponível: ${describeAIError(error)}`); process.exitCode = 1; });

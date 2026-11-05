@@ -48,6 +48,15 @@ export async function askAI(prompt: string): Promise<{ text: string; inputTokens
   return { text, inputTokens: data.usage?.input_tokens ?? data.usage?.prompt_tokens ?? 0, outputTokens: data.usage?.output_tokens ?? data.usage?.completion_tokens ?? 0 };
 }
 
+export function describeAIError(error: unknown): string {
+  if (!(error instanceof Error)) return 'Erro não identificado';
+  const safeMessages = ['AI_API_KEY ausente', 'Provedor de IA não suportado', 'URL de IA inválida', 'Parâmetro de tokens inválido', 'Resposta de IA inválida', 'Resposta inválida da IA'];
+  if (safeMessages.includes(error.message) || /^Provedor de IA HTTP [1-5]\d{2}$/.test(error.message)) return error.message;
+  if (error instanceof SyntaxError) return 'Resposta JSON inválida';
+  if (error.name === 'AbortError' || error.name === 'TimeoutError') return 'Tempo limite excedido';
+  return 'Erro não identificado';
+}
+
 export async function github(path: string, init: RequestInit = {}): Promise<Response> {
   const response = await fetchWithRetry(`https://api.github.com${path}`, { ...init, headers: { authorization: `Bearer ${process.env.GITHUB_TOKEN}`, accept: 'application/vnd.github+json', 'x-github-api-version': '2022-11-28', ...init.headers } });
   if (!response.ok) throw new Error(`GitHub HTTP ${response.status}`);
