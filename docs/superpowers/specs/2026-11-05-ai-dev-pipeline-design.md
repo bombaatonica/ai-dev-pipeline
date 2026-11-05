@@ -1,6 +1,7 @@
 # Pipeline de desenvolvimento com IA — especificação
 
 > Atualização posterior: o requisito original de Node 20 foi substituído por Node 24 LTS após o fim do suporte do Node 20.
+> Atualização posterior: por decisão do proprietário, a entrega termina em um único staging de demonstração; a promoção para production descrita abaixo não faz mais parte do escopo atual.
 
 ## Objetivo e limites
 

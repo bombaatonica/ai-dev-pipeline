@@ -1,6 +1,6 @@
 # AI Dev Pipeline
 
-Projeto de portfólio que demonstra uma API de tarefas, verificações automatizadas, revisão consultiva por IA e promoção entre ambientes de demonstração. Os ambientes chamados staging e production **não são um sistema de produção real**. O repositório não apresenta métricas de impacto não medidas.
+Projeto de portfólio que demonstra uma API de tarefas, verificações automatizadas, revisão consultiva por IA e entrega em um único ambiente de staging. O serviço é uma **demonstração**, não um sistema de produção real. O repositório não apresenta métricas de impacto não medidas.
 
 ```mermaid
 flowchart LR
@@ -10,10 +10,7 @@ flowchart LR
   C --> E[Aprovação humana e merge]
   E --> F[CI no commit mesclado e imagem GHCR]
   F --> G[Staging: deploy e testes]
-  G --> H[Aprovação humana]
-  H --> I[Production de demonstração: deploy e smoke]
   G -. falha .-> J[Tentativa de rollback]
-  I -. falha .-> J
 ```
 
 ## Etapas
@@ -27,8 +24,7 @@ flowchart LR
 | IA | Revisão e lacunas de testes, ativadas pelo label | Consultivo |
 | Merge | Revisão humana e CODEOWNERS | Configurar na proteção |
 | Pós-merge | CI novamente e publicação no GHCR | Falhas impedem staging |
-| Staging | Deploy por commit, E2E e smoke | Falhas impedem promoção |
-| Production de demonstração | Aprovação, deploy e smoke | Approval no environment |
+| Staging | Deploy por commit, E2E e smoke | Falhas marcam a entrega como malsucedida |
 | Contínuo | Dependabot e verificações agendadas | Configurável |
 
 O PostgreSQL do CI roda como serviço efêmero no runner. O workflow de preview remoto foi implementado, mas exige serviços dedicados, configuração e validação real descritos em [docs/preview.md](docs/preview.md). Não há monitoramento externo configurado. O diretório `docs` explica decisões e limitações, inclusive a diferença entre a imagem publicada e o deploy do Render.
@@ -63,12 +59,10 @@ Consulte [docs/setup.md](docs/setup.md). Resumo das credenciais e variáveis:
 | `ANTHROPIC_API_KEY` | Secret Actions | Revisão e avaliação manual, cobradas pela API |
 | `ANTHROPIC_MODEL` | Variable Actions, opcional | Modelo Anthropic |
 | `RENDER_STAGING_HOOK` | Secret environment `staging` | Deploy de staging |
-| `RENDER_PRODUCTION_HOOK` | Secret environment `production` | Deploy após aprovação |
 | `STAGING_URL` | Variable environment `staging` | E2E e smoke |
-| `PRODUCTION_URL` | Variable environment `production` | Smoke |
 | `GITLEAKS_LICENSE` | Secret Actions, quando aplicável | Licença da action para organização |
 
-O `GITHUB_TOKEN` é fornecido pelo Actions. Branch protection, CODEOWNERS e aprovação de environment precisam ser configurados no GitHub. Recursos gratuitos possuem limites e podem mudar; não se deve presumir custo total zero sem conferir uso, faturamento e limites atuais.
+O `GITHUB_TOKEN` é fornecido pelo Actions. Branch protection e CODEOWNERS precisam ser configurados no GitHub. O deploy de staging é automático após o CI; não há etapa de aprovação de produção. Recursos gratuitos possuem limites e podem mudar; não se deve presumir custo total zero sem conferir uso, faturamento e limites atuais.
 
 ## Referências
 
