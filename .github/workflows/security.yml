@@ -12,7 +12,7 @@ jobs:
       contents: read
       security-events: write
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: github/codeql-action/init@0911ee96d2d6c8def97122c36c5cadd93829a4b4
         with:
           languages: javascript-typescript
@@ -22,7 +22,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
       - uses: gitleaks/gitleaks-action@bcfb9cce635345aac9996cedc19b2de8e01b894f
